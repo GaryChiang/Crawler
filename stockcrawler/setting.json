@@ -1,0 +1,15 @@
+{
+  "db_info": {
+    "driver": "mysql+pymysql",
+    "user": "app",
+    "password": "zaqwedcxs",
+    "host": "35.201.184.199",
+    "port": "3306",
+    "database": "stock"
+  },
+  "fetch_setting": {
+    "company": false,
+    "price": true
+  }
+}
+
