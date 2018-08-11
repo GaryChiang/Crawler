@@ -99,9 +99,6 @@ class FetchData:
             for item in company:
                 # init instance
                 stock = twstock.Stock(item.StockID, False)
-                # delete all this stock history price
-                self.__session.query(Price).filter(Price.Date >= delete_duration,
-                                                   Price.StockID == item.StockID).delete()
 
                 # check log, if this period has been executed, pass this loop
                 log_history = self.__session.query(CrawlerLog.Param2).filter(
@@ -117,6 +114,10 @@ class FetchData:
                     # they are necessary that execute every time.
                     if check_condition in log_history and x > 1:
                         continue
+
+                    # delete all this stock history price
+                    self.__session.query(Price).filter(Price.Date == period,
+                                                       Price.StockID == item.StockID).delete()
 
                     time.sleep(5)
 
