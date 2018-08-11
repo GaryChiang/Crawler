@@ -166,10 +166,15 @@ class FetchData:
 
     def __log(self, name, param1, param2, log_type):
         try:
+            # 先刪除
+            self.__session.query(CrawlerLog).filter(CrawlerLog.Param1 == param1, CrawlerLog.Param2 == param2).delete()
+
             log = CrawlerLog(UID=str(uuid.uuid4()), FunName=name,
                              Param1=param1,
                              Param2=param2, Type=log_type,
                              CreateTime=datetime.datetime.now())
+
+            # 新增
             self.__session.add(log)
         except Exception:
             raise
