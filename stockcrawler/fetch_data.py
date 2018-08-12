@@ -129,7 +129,7 @@ class FetchData:
                         self.__session.query(Price).filter(Price.Date == day.date,
                                                            Price.StockID == item.StockID).delete()
 
-                        price = Price(UID='fsffffffffffffffffffffffffffffffffffffffffff', Date=day.date, StockID=item.StockID, Open=day.open,
+                        price = Price(UID=str(uuid.uuid4()), Date=day.date, StockID=item.StockID, Open=day.open,
                                       Close=day.close, High=day.high, Low=day.low, Change=day.change,
                                       Transaction=day.transaction, Capacity=day.capacity, Turnover=day.turnover,
                                       CreateDt=datetime.datetime.now())
