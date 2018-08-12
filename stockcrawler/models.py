@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR, Column, Date, DateTime, Float, INTEGER, String
+from sqlalchemy import CHAR, Column, Date, DateTime, Float, INTEGER, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -28,7 +28,7 @@ class CrawlerLog(Base):
     Param2 = Column(String(45))
     Param3 = Column(String(45))
     Type = Column(String(45))
-    Msg = Column(String(45))
+    Msg = Column(Text)
     CreateTime = Column(DateTime)
     CreateUser = Column(String(45))
 

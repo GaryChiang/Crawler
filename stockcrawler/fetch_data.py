@@ -129,7 +129,7 @@ class FetchData:
                         self.__session.query(Price).filter(Price.Date == day.date,
                                                            Price.StockID == item.StockID).delete()
 
-                        price = Price(UID=str(uuid.uuid4()), Date=day.date, StockID=item.StockID, Open=day.open,
+                        price = Price(UID='fsffffffffffffffffffffffffffffffffffffffffff', Date=day.date, StockID=item.StockID, Open=day.open,
                                       Close=day.close, High=day.high, Low=day.low, Change=day.change,
                                       Transaction=day.transaction, Capacity=day.capacity, Turnover=day.turnover,
                                       CreateDt=datetime.datetime.now())
@@ -139,7 +139,8 @@ class FetchData:
                     self.__session.commit()
 
         except Exception as e:
-            self.__log_error('fetch_history_stock_price', e)
+            self.__session.rollback()
+            self.__log_error('fetch_history_stock_price', str(e))
             raise
 
     def execute(self):
@@ -187,7 +188,6 @@ class FetchData:
 
     def __log_error(self, name, message):
         try:
-
             log = CrawlerLog(UID=str(uuid.uuid4()), FunName=name, Type='error',
                              Msg=message, CreateTime=datetime.datetime.now())
 
