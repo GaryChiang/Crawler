@@ -141,7 +141,7 @@ class FetchData:
         except Exception as e:
             self.__session.rollback()
             self.__log_error('fetch_history_stock_price', str(e))
-            raise
+            pass
 
     def execute(self):
         """

@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR, Column, Date, DateTime, Float, INTEGER, String, Text
+from sqlalchemy import CHAR, Column, Date, DateTime, Float, INTEGER, String, Text, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -46,6 +46,6 @@ class Price(Base):
     Change = Column(Float)
     Transaction = Column(INTEGER)
     Capacity = Column(INTEGER)
-    Turnover = Column(INTEGER)
+    Turnover = Column(BIGINT)
     CreateDt = Column(DateTime)
     CreateUser = Column(String(50))
