@@ -102,7 +102,9 @@ class FetchData:
 
                 # check log, if this period has been executed, pass this loop
                 log_history = self.__session.query(CrawlerLog.Param2).filter(
-                    CrawlerLog.FunName == 'fetch_history_stock_price', CrawlerLog.Type == 'info').all()
+                    CrawlerLog.FunName == 'fetch_history_stock_price',
+                    CrawlerLog.Type == 'info',
+                    CrawlerLog.Param1 == item.StockID).all()
 
                 log_history = [value for (value,) in log_history]
 
