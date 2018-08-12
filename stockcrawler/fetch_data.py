@@ -24,14 +24,17 @@ class FetchData:
         with open(os.path.join(app_dir, 'setting.json').replace('\\', '/')) as file:
             self.__setting = json.load(file)
 
-        # information
-        driver = self.__setting['db_info']['driver']
-        user = self.__setting['db_info']['user']
-        password = self.__setting['db_info']['password']
-        host = self.__setting['db_info']['host']
-        port = self.__setting['db_info']['port']
-        database = self.__setting['db_info']['database']
-        connect_info = '{0}://{1}:{2}@{3}:{4}/{5}'.format(driver, user, password, host, port, database)
+        if 'connect' in os.environ:
+            connect_info = os.environ.get('connect', None)
+        else:
+            # information
+            driver = self.__setting['db_info']['driver']
+            user = self.__setting['db_info']['user']
+            password = self.__setting['db_info']['password']
+            host = self.__setting['db_info']['host']
+            port = self.__setting['db_info']['port']
+            database = self.__setting['db_info']['database']
+            connect_info = '{0}://{1}:{2}@{3}:{4}/{5}'.format(driver, user, password, host, port, database)
 
         # create_engine("数据库类型+数据库驱动://数据库用户名:数据库密码@IP地址:端口/数据库"，其他参数)
         engine = create_engine(connect_info)
@@ -90,8 +93,8 @@ class FetchData:
         try:
             start = datetime.date.today()
 
-            # delete overlay part
-            delete_duration = self.__add_months(start, -self.duration)
+            # # delete overlay part
+            # delete_duration = self.__add_months(start, -self.duration)
 
             # query all need transfer companies
             company = self.__session.query(Company.StockID).filter(Company.Type == '股票')
@@ -117,15 +120,15 @@ class FetchData:
                     if check_condition in log_history and x > 1:
                         continue
 
-                    # delete all this stock history price
-                    self.__session.query(Price).filter(Price.Date == period,
-                                                       Price.StockID == item.StockID).delete()
-
                     time.sleep(5)
 
                     data = stock.fetch(period.year, period.month)
 
                     for day in data:
+                        # delete all this stock history price
+                        self.__session.query(Price).filter(Price.Date == day.date,
+                                                           Price.StockID == item.StockID).delete()
+
                         price = Price(UID=str(uuid.uuid4()), Date=day.date, StockID=item.StockID, Open=day.open,
                                       Close=day.close, High=day.high, Low=day.low, Change=day.change,
                                       Transaction=day.transaction, Capacity=day.capacity, Turnover=day.turnover,
@@ -135,7 +138,8 @@ class FetchData:
                     self.__log('fetch_history_stock_price', item.StockID, check_condition, 'info')
                     self.__session.commit()
 
-        except Exception:
+        except Exception as e:
+            self.__log_error('fetch_history_stock_price', e)
             raise
 
     def execute(self):
@@ -178,5 +182,17 @@ class FetchData:
 
             # 新增
             self.__session.add(log)
+        except Exception:
+            raise
+
+    def __log_error(self, name, message):
+        try:
+
+            log = CrawlerLog(UID=str(uuid.uuid4()), FunName=name, Type='error',
+                             Msg=message, CreateTime=datetime.datetime.now())
+
+            # 新增
+            self.__session.add(log)
+            self.__session.commit()
         except Exception:
             raise
