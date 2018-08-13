@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from stockcrawler.models import Company, Price, CrawlerLog
+from stockcrawler.models import Company, Price, CrawlerLog, TimeSeries
 import twstock
 import datetime
 import uuid
@@ -91,7 +91,13 @@ class FetchData:
         :return:
         """
         try:
+            # 建立時間序列
+            self.__create_series()
+            # 當月及上個月必須重轉, 無論是否已經轉過
             start = datetime.date.today()
+            current_month = str(start.year) + str(start.month).zfill(2)
+            last_month = self.__add_months(start, -1)
+            last_month = str(last_month.year) + str(last_month.month).zfill(2)
 
             # # delete overlay part
             # delete_duration = self.__add_months(start, -self.duration)
@@ -128,6 +134,7 @@ class FetchData:
                         self.__log_error('fetch_history_stock_price', str(e))
                         continue
 
+                    time.sleep(10)
                     for day in data:
                         # delete all this stock history price
                         self.__session.query(Price).filter(Price.Date == day.date,
@@ -138,14 +145,13 @@ class FetchData:
                                       Transaction=day.transaction, Capacity=day.capacity, Turnover=day.turnover,
                                       CreateDt=datetime.datetime.now())
                         self.__session.add(price)
-
-                    self.__log('fetch_history_stock_price', item.StockID, check_condition, 'info')
+                    self.__log('fetch_history_stock_price', item.StockID, x, 'info')
                     self.__session.commit()
 
         except Exception as e:
             self.__session.rollback()
             self.__log_error('fetch_history_stock_price', str(e))
-            raise
+            pass
 
     def execute(self):
         """
@@ -200,3 +206,30 @@ class FetchData:
             self.__session.commit()
         except Exception:
             raise
+
+    def __create_series(self):
+        """
+        建立時間序列
+        :return:
+        """
+        try:
+            start = datetime.date.today()
+
+            all_series = self.__session.query(TimeSeries.Series).all()
+            all_series = [value for (value,) in all_series]
+
+            for x in range(0, self.duration):
+                series = self.__add_months(start, -x)
+                series = str(series.year) + str(series.month).zfill(2)
+
+                if series in all_series:
+                    continue
+
+                time_series = TimeSeries(UID=str(uuid.uuid4()), Series=series)
+
+                self.__session.add(time_series)
+                self.__session.commit()
+
+        except Exception:
+            raise
+

@@ -49,3 +49,10 @@ class Price(Base):
     Turnover = Column(BIGINT)
     CreateDt = Column(DateTime)
     CreateUser = Column(String(50))
+
+
+class TimeSeries(Base):
+    __tablename__ = 'TimeSeries'
+
+    UID = Column(CHAR(36), primary_key=True)
+    Series = Column(CHAR(6), unique=True)
