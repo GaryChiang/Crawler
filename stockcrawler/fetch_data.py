@@ -124,8 +124,7 @@ class FetchData:
 
                     try:
                         data = stock.fetch(period.year, period.month)
-                    except ValueError as e:
-                        self.__session.rollback()
+                    except ValueError as e:                       
                         self.__log_error('fetch_history_stock_price', str(e))
                         continue
 
