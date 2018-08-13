@@ -113,25 +113,21 @@ class FetchData:
                 log_history = self.__session.query(CrawlerLog.Param2).filter(
                     CrawlerLog.FunName == 'fetch_history_stock_price',
                     CrawlerLog.Type == 'info',
+                    CrawlerLog.Param2 != current_month,
+                    CrawlerLog.Param2 != last_month,
                     CrawlerLog.Param1 == item.StockID).all()
 
                 log_history = [value for (value,) in log_history]
 
-                for x in range(0, self.duration):
-                    period = self.__add_months(start, -x)
-                    check_condition = str(period.year) + str(period.month).zfill(2)
+                time_series = self.__session.query(TimeSeries.Series).filter(
+                    TimeSeries.Series.notin_(log_history)).all()
 
-                    # current month and last month have to pass this loop.
-                    # they are necessary that execute every time.
-                    if check_condition in log_history and x > 1:
-                        continue
+                time_series = [value for (value,) in time_series]
 
-                    time.sleep(5)
-
+                for x in time_series:
                     try:
-                        data = stock.fetch(period.year, period.month)
-                    except ValueError as e:                       
-                        self.__log_error('fetch_history_stock_price', str(e))
+                        data = stock.fetch(int(x[0:4]), int(x[4:6]))
+                    except ValueError:
                         continue
 
                     time.sleep(10)
