@@ -122,7 +122,12 @@ class FetchData:
 
                     time.sleep(5)
 
-                    data = stock.fetch(period.year, period.month)
+                    try:
+                        data = stock.fetch(period.year, period.month)
+                    except ValueError as e:
+                        self.__session.rollback()
+                        self.__log_error('fetch_history_stock_price', str(e))
+                        continue
 
                     for day in data:
                         # delete all this stock history price
@@ -141,7 +146,7 @@ class FetchData:
         except Exception as e:
             self.__session.rollback()
             self.__log_error('fetch_history_stock_price', str(e))
-            pass
+            raise
 
     def execute(self):
         """
