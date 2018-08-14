@@ -130,7 +130,7 @@ class FetchData:
                     except ValueError:
                         continue
 
-                    time.sleep(10)
+                    time.sleep(5)
                     for day in data:
                         # delete all this stock history price
                         self.__session.query(Price).filter(Price.Date == day.date,
