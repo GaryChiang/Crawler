@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from stockcrawler.models import Company, Price, CrawlerLog, TimeSeries
 import twstock
@@ -8,6 +8,8 @@ import time
 import os
 import json
 import calendar
+import requests
+from decimal import Decimal
 
 
 class FetchData:
@@ -70,6 +72,7 @@ class FetchData:
                                   Name=twse[index].name, Category=twse[index].group, Start=twse[index].start,
                                   Market=twse[index].market, CreateDate=datetime.datetime.now())
                 self.__session.add(company)
+                self.__session.commit()
 
             for index in tpex:
 
@@ -80,8 +83,7 @@ class FetchData:
                                   Name=tpex[index].name, Category=tpex[index].group, Start=tpex[index].start,
                                   Market=tpex[index].market, CreateDate=datetime.datetime.now())
                 self.__session.add(company)
-
-            self.__session.commit()
+                self.__session.commit()
         except Exception:
             raise
 
@@ -90,7 +92,93 @@ class FetchData:
         fetch history data
         :return:
         """
+
+        # 建立時間序列
+        self.__create_series()
+
+        # 轉檔範圍
+        series = self.__session.query(TimeSeries.Series).filter(TimeSeries.Execute == 0). \
+            order_by(asc(TimeSeries.Series))
+
+        series = [value for (value,) in series]
+
+        # 上市/上櫃 公司
+        company = self.__session.query(Company.StockID).filter(Company.Type == '股票').all()
+
+        company = [value for (value,) in company]
+
+        for day in series:
+            try:
+                time.sleep(1)
+                # 上市
+                result = requests.get(
+                    'http://www.twse.com.tw/exchangeReport/MI_INDEX?'
+                    'response=json&date=' + day + '&type=ALL')
+
+                result = json.loads(result.text)
+
+                if 'data2' in result:
+                    for item in result['data2']:
+                        item[2] = item[2].replace('--', '0').replace(' ', '')
+                        item[3] = item[3].replace('--', '0').replace(' ', '')
+                        item[4] = item[4].replace('--', '0').replace(' ', '')
+                        item[5] = item[5].replace('--', '0').replace(' ', '')
+                        item[8] = item[8].replace('--', '0').replace(' ', '')
+                        item[10] = str(Decimal(item[5]) - Decimal(item[8]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
+                        item[6] = item[6].replace('--', '0').replace(' ', '')
+                        item[7] = item[7].replace('--', '0').replace(' ', '')
+
+                        if item[0] in company:
+                            price = Price(UID=str(uuid.uuid4()), Date=datetime.datetime.strptime(day, '%Y%m%d').date(),
+                                          StockID=item[0], Open=item[5].replace(',', ''),
+                                          Close=item[8].replace(',', ''),
+                                          High=item[6].replace(',', ''), Low=item[7].replace(',', ''),
+                                          Change=item[10].replace(',', ''), Transaction=item[3].replace(',', ''),
+                                          Capacity=item[2].replace(',', ''), Turnover=item[4].replace(',', ''),
+                                          CreateDt=datetime.datetime.now())
+                            self.__session.add(price)
+
+                # 上櫃
+                tw_time = self.__to_tw_time(day)
+                result = requests.get(
+                    'http://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?'
+                    'l=zh-tw&o=json&d=' + tw_time + '&s=0,asc,0')
+
+                result = json.loads(result.text)
+
+                if 'aaData' in result:
+                    for item in result['aaData']:
+                        item[2] = item[2].replace('--', '0').replace(' ', '')
+                        item[4] = item[4].replace('--', '0').replace(' ', '')
+                        item[3] = str(Decimal(item[2]) - Decimal(item[4]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
+                        item[10] = item[10].replace('--', '0').replace(' ', '')
+                        item[5] = item[5].replace('--', '0').replace(' ', '')
+                        item[6] = item[6].replace('--', '0').replace(' ', '')
+                        item[9] = item[9].replace('--', '0').replace(' ', '')
+                        item[8] = item[8].replace('--', '0').replace(' ', '')
+                        if item[0] in company:
+                            price = Price(UID=str(uuid.uuid4()), Date=datetime.datetime.strptime(day, '%Y%m%d').date(),
+                                          StockID=item[0], Open=item[4].replace(',', ''),
+                                          Close=item[2].replace(',', ''),
+                                          High=item[5].replace(',', ''), Low=item[6].replace(',', ''),
+                                          Change=item[3].replace(',', ''), Transaction=item[10].replace(',', ''),
+                                          Capacity=item[8].replace(',', ''), Turnover=item[9].replace(',', ''),
+                                          CreateDt=datetime.datetime.now())
+                            self.__session.add(price)
+
+                time_series = self.__session.query(TimeSeries).filter(TimeSeries.Series == day).first()
+                time_series.Execute = 1
+                self.__session.commit()
+
+            except Exception as e:
+                self.__session.rollback()
+                self.__log_error('fetch_history_stock_price', str(e) + '[param:' + day + ']')
+                continue
+
+    @staticmethod
+    def __to_tw_time(ad_time):
         try:
+<<<<<<< Updated upstream
             # 建立時間序列
             self.__create_series()
             # 當月及上個月必須重轉, 無論是否已經轉過
@@ -147,6 +235,12 @@ class FetchData:
         except Exception as e:
             self.__session.rollback()
             self.__log_error('fetch_history_stock_price', str(e))
+=======
+            tw_time = str(int(ad_time[0:4]) - 1911) + '/' + ad_time[4:6] + '/' + ad_time[6:8]
+
+            return tw_time
+        except Exception:
+>>>>>>> Stashed changes
             raise
 
     def execute(self):
@@ -209,23 +303,25 @@ class FetchData:
         :return:
         """
         try:
-            start = datetime.date.today()
+            current = datetime.date.today()
 
             all_series = self.__session.query(TimeSeries.Series).all()
             all_series = [value for (value,) in all_series]
 
-            for x in range(0, self.duration):
-                series = self.__add_months(start, -x)
-                series = str(series.year) + str(series.month).zfill(2)
+            start = self.__add_months(current, -self.duration)
+            days = int((current - start).days)
+
+            for x in range(0, days):
+                series = start + datetime.timedelta(days=x)
+                series = str(series.year) + str(series.month).zfill(2) + str(series.day).zfill(2)
 
                 if series in all_series:
                     continue
 
-                time_series = TimeSeries(UID=str(uuid.uuid4()), Series=series)
+                time_series = TimeSeries(UID=str(uuid.uuid4()), Series=series, Execute=0)
 
                 self.__session.add(time_series)
                 self.__session.commit()
 
         except Exception:
             raise
-

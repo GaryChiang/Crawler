@@ -1,5 +1,5 @@
 {
-  "db_info": {
+  "mysql_db_info": {
     "driver": "mysql+pymysql",
     "user": "app",
     "password": "zaqwedcxs",
@@ -8,8 +8,16 @@
     "database": "stock"
   },
   "fetch_setting": {
-    "company": false,
+    "company": true,
     "price": true
+  },
+  "db_info": {
+    "driver": "mssql+pymssql",
+    "user": "gary",
+    "password": "gary",
+    "host": "114.33.29.143",
+    "port": "5228",
+    "database": "stock"
   }
 }
 
