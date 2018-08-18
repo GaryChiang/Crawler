@@ -8,7 +8,7 @@
     "database": "stock"
   },
   "fetch_setting": {
-    "company": true,
+    "company": false,
     "price": true
   },
   "db_info": {
