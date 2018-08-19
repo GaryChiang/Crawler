@@ -62,6 +62,7 @@ class FetchData:
 
             company_data = self.__session.query(Company.StockID).all()
             company_data = [value for (value,) in company_data]
+            collect = list()
 
             for index in twse:
 
@@ -71,8 +72,7 @@ class FetchData:
                 company = Company(UID=str(uuid.uuid4()), Type=twse[index].type, StockID=twse[index].code,
                                   Name=twse[index].name, Category=twse[index].group, Start=twse[index].start,
                                   Market=twse[index].market, CreateDate=datetime.datetime.now())
-                self.__session.add(company)
-                self.__session.commit()
+                collect.append(company)
 
             for index in tpex:
 
@@ -82,9 +82,11 @@ class FetchData:
                 company = Company(UID=str(uuid.uuid4()), Type=tpex[index].type, StockID=tpex[index].code,
                                   Name=tpex[index].name, Category=tpex[index].group, Start=tpex[index].start,
                                   Market=tpex[index].market, CreateDate=datetime.datetime.now())
-                self.__session.add(company)
-                self.__session.commit()
+                collect.append(company)
+
+            self.__session.commit()
         except Exception:
+            self.__session.rollback()
             raise
 
     def fetch_history_stock_price(self):
@@ -109,6 +111,7 @@ class FetchData:
 
         for day in series:
             try:
+                collect = list()
                 time.sleep(1)
                 # 上市
                 result = requests.get(
@@ -136,7 +139,7 @@ class FetchData:
                                           Change=item[10].replace(',', ''), Transaction=item[3].replace(',', ''),
                                           Capacity=item[2].replace(',', ''), Turnover=item[4].replace(',', ''),
                                           CreateDt=datetime.datetime.now())
-                            self.__session.add(price)
+                            collect.append(price)
 
                 # 上櫃
                 tw_time = self.__to_tw_time(day)
@@ -164,8 +167,9 @@ class FetchData:
                                           Change=item[3].replace(',', ''), Transaction=item[10].replace(',', ''),
                                           Capacity=item[8].replace(',', ''), Turnover=item[9].replace(',', ''),
                                           CreateDt=datetime.datetime.now())
-                            self.__session.add(price)
+                            collect.append(price)
 
+                self.__session.add_all(collect)
                 time_series = self.__session.query(TimeSeries).filter(TimeSeries.Series == day).first()
                 time_series.Execute = 1
                 self.__session.commit()
