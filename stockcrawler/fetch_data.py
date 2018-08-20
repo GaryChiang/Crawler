@@ -120,26 +120,32 @@ class FetchData:
 
                 result = json.loads(result.text)
 
+                data_set = list()
                 if 'data2' in result:
-                    for item in result['data2']:
-                        item[2] = item[2].replace('--', '0').replace(' ', '')
-                        item[3] = item[3].replace('--', '0').replace(' ', '')
-                        item[4] = item[4].replace('--', '0').replace(' ', '')
-                        item[5] = item[5].replace('--', '0').replace(' ', '')
-                        item[8] = item[8].replace('--', '0').replace(' ', '')
-                        item[10] = str(Decimal(item[5]) - Decimal(item[8]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
-                        item[6] = item[6].replace('--', '0').replace(' ', '')
-                        item[7] = item[7].replace('--', '0').replace(' ', '')
+                    data_set = result['data2']
 
-                        if item[0] in company:
-                            price = Price(UID=str(uuid.uuid4()), Date=datetime.datetime.strptime(day, '%Y%m%d').date(),
-                                          StockID=item[0], Open=item[5].replace(',', ''),
-                                          Close=item[8].replace(',', ''),
-                                          High=item[6].replace(',', ''), Low=item[7].replace(',', ''),
-                                          Change=item[10].replace(',', ''), Transaction=item[3].replace(',', ''),
-                                          Capacity=item[2].replace(',', ''), Turnover=item[4].replace(',', ''),
-                                          CreateDt=datetime.datetime.now())
-                            collect.append(price)
+                if 'data4' in result:
+                    data_set = result['data4']
+
+                for item in data_set:
+                    item[2] = item[2].replace('--', '0').replace(' ', '')
+                    item[3] = item[3].replace('--', '0').replace(' ', '')
+                    item[4] = item[4].replace('--', '0').replace(' ', '')
+                    item[5] = item[5].replace('--', '0').replace(' ', '')
+                    item[8] = item[8].replace('--', '0').replace(' ', '')
+                    item[10] = str(Decimal(item[5]) - Decimal(item[8]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
+                    item[6] = item[6].replace('--', '0').replace(' ', '')
+                    item[7] = item[7].replace('--', '0').replace(' ', '')
+
+                    if item[0] in company:
+                        price = Price(UID=str(uuid.uuid4()), Date=datetime.datetime.strptime(day, '%Y%m%d').date(),
+                                      StockID=item[0], Open=item[5].replace(',', ''),
+                                      Close=item[8].replace(',', ''),
+                                      High=item[6].replace(',', ''), Low=item[7].replace(',', ''),
+                                      Change=item[10].replace(',', ''), Transaction=item[3].replace(',', ''),
+                                      Capacity=item[2].replace(',', ''), Turnover=item[4].replace(',', ''),
+                                      CreateDt=datetime.datetime.now())
+                        collect.append(price)
 
                 # 上櫃
                 tw_time = self.__to_tw_time(day)
