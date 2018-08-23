@@ -133,7 +133,7 @@ class FetchData:
                     item[4] = item[4].replace('--', '0').replace(' ', '')
                     item[5] = item[5].replace('--', '0').replace(' ', '')
                     item[8] = item[8].replace('--', '0').replace(' ', '')
-                    item[10] = str(Decimal(item[5]) - Decimal(item[8]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
+                    item[10] = str(Decimal(item[8]) - Decimal(item[5]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
                     item[6] = item[6].replace('--', '0').replace(' ', '')
                     item[7] = item[7].replace('--', '0').replace(' ', '')
 
@@ -159,7 +159,7 @@ class FetchData:
                     for item in result['aaData']:
                         item[2] = item[2].replace('--', '0').replace(' ', '')
                         item[4] = item[4].replace('--', '0').replace(' ', '')
-                        item[3] = str(Decimal(item[2]) - Decimal(item[4]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
+                        item[3] = str(Decimal(item[4]) - Decimal(item[2]))  # 因為有除權息情況, 所以這邊用算的, 不帶入資料. 資料會有除權息的中文
                         item[10] = item[10].replace('--', '0').replace(' ', '')
                         item[5] = item[5].replace('--', '0').replace(' ', '')
                         item[6] = item[6].replace('--', '0').replace(' ', '')
